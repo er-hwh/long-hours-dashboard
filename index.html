@@ -58,11 +58,24 @@ const API_URL = "https://script.google.com/macros/s/AKfycbx-y74zeX0hjFWt6x07SWiN
 let fullData = [];
 
 async function loadData() {
-  const res = await fetch(API_URL);
-  fullData = await res.json();
+  try {
+    document.getElementById("tableBody").innerHTML = "<tr><td colspan='10'>Loading...</td></tr>";
 
-  populateCategory();
-  applyFilter();
+    const res = await fetch(API_URL, {
+      method: "GET",
+      redirect: "follow"
+    });
+
+    const text = await res.text();   // 🔥 IMPORTANT
+    fullData = JSON.parse(text);
+
+    populateCategory();
+    applyFilter();
+
+  } catch (err) {
+    console.error(err);
+    alert("Data load failed ❌");
+  }
 }
 
 function populateCategory() {
