@@ -59,14 +59,15 @@ let fullData = [];
 
 async function loadData() {
   try {
-    document.getElementById("tableBody").innerHTML = "<tr><td colspan='10'>Loading...</td></tr>";
+    document.getElementById("tableBody").innerHTML =
+      "<tr><td colspan='10' class='text-center'>Loading...</td></tr>";
 
     const res = await fetch(API_URL, {
       method: "GET",
       redirect: "follow"
     });
 
-    const text = await res.text();   // 🔥 IMPORTANT
+    const text = await res.text();
     fullData = JSON.parse(text);
 
     populateCategory();
@@ -74,7 +75,8 @@ async function loadData() {
 
   } catch (err) {
     console.error(err);
-    alert("Data load failed ❌");
+    document.getElementById("tableBody").innerHTML =
+      "<tr><td colspan='10' class='text-danger text-center'>Failed to load data</td></tr>";
   }
 }
 
@@ -94,7 +96,7 @@ function applyFilter() {
   const cat = document.getElementById("categoryFilter").value;
   const section = document.getElementById("sectionFilter").value.toLowerCase();
 
-  const filtered = fullData.filter(d => {
+  let filtered = fullData.filter(d => {
 
     if (from && d["Sign Off Date"] < from) return false;
     if (to && d["Sign Off Date"] > to) return false;
@@ -104,6 +106,9 @@ function applyFilter() {
     return true;
   });
 
+  // 🔥 SORT BY NOS DESC
+  filtered.sort((a, b) => b.NOS - a.NOS);
+
   renderTable(filtered);
 }
 
@@ -111,7 +116,16 @@ function renderTable(data) {
   const tbody = document.getElementById("tableBody");
   tbody.innerHTML = "";
 
+  if (data.length === 0) {
+    tbody.innerHTML = "<tr><td colspan='10' class='text-center'>No data found</td></tr>";
+    return;
+  }
+
+  let totalNOS = 0;
+
   data.forEach(d => {
+    totalNOS += d.NOS;
+
     tbody.innerHTML += `
       <tr>
         <td>${d.CATEGORY}</td>
@@ -127,9 +141,22 @@ function renderTable(data) {
       </tr>
     `;
   });
+
+  // 🔥 TOTAL ROW
+  tbody.innerHTML += `
+    <tr class="table-warning fw-bold">
+      <td colspan="2">TOTAL</td>
+      <td>${totalNOS}</td>
+      <td>100%</td>
+      <td colspan="6"></td>
+    </tr>
+  `;
 }
 
-// 🔥 auto filter on change
+// 🔥 AUTO LOAD ON PAGE OPEN
+window.onload = loadData;
+
+// 🔥 AUTO FILTER
 document.querySelectorAll("input, select").forEach(el => {
   el.addEventListener("change", applyFilter);
 });
